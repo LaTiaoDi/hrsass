@@ -13,10 +13,10 @@ export default {
   name: 'Dashboard',
   computed: {
     ...mapGetters(['name'])
+  },
+  created() {
+    console.log(this.$router)
   }
-  // created() {
-  //   this.$store.dispatch('user/getUserInfo')
-  // }
 }
 </script>
 

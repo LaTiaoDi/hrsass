@@ -2,12 +2,22 @@
 import axios from "axios";
 import { Message } from "element-ui";
 import store from "@/store";
+import { getTimeStamp } from "./auth";
+import router from "@/router";
+const TimeOut = 3600; //定义超时时间，3600秒
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, //基础地址
   timeout: 5000 // 超时
 }); // 创建一个axios的实例
 service.interceptors.request.use(
   function(config) {
+    if (store.getters.token) {
+      if (IsCheckTimeOut()) {
+        store.dispatch("user/exit");
+        router.push("/login");
+        return Promise.reject(new Error("登陆过期，请重新登陆"));
+      }
+    }
     config.headers.Authorization = `Bearer ${store.getters.token}`;
     return config;
   },
@@ -26,8 +36,26 @@ service.interceptors.response.use(
     }
   },
   error => {
-    Message.error(error.message);
-    return Promise.reject(error); //返回
+    if (
+      error.response &&
+      error.response.data &&
+      error.response.data.code === 10002
+    ) {
+      // 当等于10002的时候 表示 后端告诉我token超时了
+      store.dispatch("user/logout"); // 登出action 删除token
+      router.push("/login");
+    } else {
+      Message.error(error.message); // 提示错误信息
+    }
+    return Promise.reject(error);
   }
 ); // 响应拦截器
+
+// 是否超时
+// 超时逻辑  (当前时间  - 缓存中的时间) 是否大于 时间差
+function IsCheckTimeOut() {
+  const currentTime = Date.now(); //当前时间戳
+  const timeStamp = getTimeStamp();
+  return (currentTime - timeStamp) / 1000 > TimeOut; //当前时间戳除1000等于秒数，减去登陆时候的秒数 = 超时的时间 > 1000
+}
 export default service; // 导出axios实例

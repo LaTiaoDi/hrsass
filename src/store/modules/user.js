@@ -1,4 +1,5 @@
 import { login, getUserInfo, getUserDetailById } from "@/api/user";
+import { Message } from "element-ui";
 import * as Storage from "@/utils/auth";
 
 const state = {
@@ -26,13 +27,18 @@ const mutations = {
 };
 const actions = {
   async login(context, data) {
-    const result = await login(data);
-    context.commit("setToken", result);
+    try {
+      const result = await login(data);
+      context.commit("setToken", result);
+    } catch (error) {
+      Message.error(error);
+    }
   },
   exit(context) {
-    Storage.removeToken();
-    context.commit("reomveUserInfo");
-    context.commit("removeToken");
+    Storage.setTimeStamp();
+    Storage.removeToken(); //删除本地
+    context.commit("reomveUserInfo"); //删除仓库用户信息
+    context.commit("removeToken"); //删除用户token
   },
   async getUserInfo(context) {
     const result = await getUserInfo(); // 获取返回值
