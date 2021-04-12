@@ -1,105 +1,72 @@
 <template>
   <div class="dashboard-container">
     <div class="app-container">
+      <!-- 实现页面的基本布局 -->
       <el-card class="tree-card">
         <!-- 用了一个行列布局 -->
-        <el-row type="flex"
-                justify="space-between"
-                align="middle"
-                style="height: 40px">
-          <el-col>
-            <span>江苏传智播客教育科技股份有限公司</span>
-          </el-col>
-          <el-col :span="4">
-            <el-row type="flex"
-                    justify="end">
-              <!-- 两个内容 -->
-              <el-col>负责人</el-col>
-              <el-col>
-                <!-- 下拉菜单 element -->
-                <el-dropdown>
-                  <span>
-                    操作<i class="el-icon-arrow-down" />
-                  </span>
-                  <!-- 下拉菜单 -->
-                  <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item>添加子部门</el-dropdown-item>
-                  </el-dropdown-menu>
-                </el-dropdown>
-              </el-col>
-            </el-row>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-tree :data="list"
-                   :props="defaultProps"
-                   @node-click="handleNodeClick">
-            <el-row slot-scope="{ data }"
-                    type="flex"
-                    justify="space-between"
-                    align="middle"
-                    style="height: 40px">
-              <el-col>
-                <span>{{ data.name }}</span>
-              </el-col>
-              <el-col :span="4">
-                <el-row type="flex"
-                        justify="end">
-                  <!-- 两个内容 -->
-                  <el-col>负责人</el-col>
-                  <el-col>
-                    <!-- 下拉菜单 element -->
-                    <el-dropdown>
-                      <span>
-                        操作<i class="el-icon-arrow-down" />
-                      </span>
-                      <!-- 下拉菜单 -->
-                      <el-dropdown-menu slot="dropdown">
-                        <el-dropdown-item>添加子部门</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </el-dropdown>
-                  </el-col>
-                </el-row>
-              </el-col>
-            </el-row>
-          </el-tree>
-        </el-row>
+        <!-- 缺少treeNode -->
+        <tree-tools :tree-node="gada"
+                    :isgada="true"
+                    @add="setAdd"
+                    @delDepts="getDepartments" />
+        <!--放置一个属性   这里的props和我们之前学习的父传子 的props没关系-->
+        <el-tree :data="list"
+                 :props="defaultProps"
+                 default-expand-all>
+          <!-- 说明el-tree里面的这个内容 就是插槽内容 => 填坑内容  => 有多少个节点循环多少次 -->
+          <!-- scope-scope 是 tree组件传给每个节点的插槽的内容的数据 -->
+          <!-- 顺序一定是 执行slot-scope的赋值 才去执行 props的传值 -->
+          <tree-tools slot-scope="{ data }"
+                      :tree-node="data"
+                      @add="setAdd"
+                      @delDepts="getDepartments" />
+        </el-tree>
       </el-card>
     </div>
+    <add-dept :showgada="add"
+              :tree-node="node" />
   </div>
 </template>
 
 <script>
+import AddDept from './components/add-dept'
+import TreeTools from './components/tree-tools'
+import { getDepartments } from '@/api/departments'
+import { tranListToTreeData } from '@/utils/index'
 export default {
+  components: {
+    TreeTools,
+    AddDept
+  },
   data() {
     return {
-      list: [
-        {
-          name: 'gada',
-          children: [
-            {
-              name: 'gadazhoaxing'
-            }
-          ]
-        },
-        {
-          name: 'gada',
-          children: [
-            {
-              name: 'gadazhoaxing'
-            }
-          ]
-        }
-      ],
+      list: [],
+      gada: {
+        name: '江苏传智播客教育科技股份有限公司',
+        manager: '负责人'
+      },
       defaultProps: {
         children: 'children',
         label: 'name'
-      }
+      },
+      add: false, //添加弹出框
+      node: {} //当前添加节点信息
     }
   },
+  created() {
+    this.getDepartments() // 调用自身的方法
+  },
   methods: {
-    handleNodeClick(data) {
-      console.log(data)
+    async getDepartments() {
+      const data = await getDepartments()
+
+      this.gada = { name: data.companyName, manager: '负责人', id: '' }
+      this.list = tranListToTreeData(data.depts, '')
+    },
+    setAdd(node) {
+      this.add = true // 显示弹层
+      // 因为node是当前的点击的部门， 此时这个部门应该记录下来,
+      this.node = node
     }
   }
 }
