@@ -1,10 +1,12 @@
 <template>
   <!-- 新增部门的弹层 -->
-  <el-dialog title="新增部门"
-             :visible="showgada">
+  <el-dialog :title="showTitle"
+             :visible="showgada"
+             @close="cancel">
     <!-- 表单组件  el-form   label-width设置label的宽度   -->
     <!-- 匿名插槽 -->
-    <el-form :model="formData"
+    <el-form ref="deptForm"
+             :model="formData"
              :rules="rules"
              label-width="120px">
       <el-form-item label="部门名称"
@@ -23,7 +25,13 @@
                     prop="manager">
         <el-select v-model="formData.manager"
                    style="width:80%"
-                   placeholder="请选择" />
+                   placeholder="请选择"
+                   @focus="getEmployeeSimple">
+          <el-option v-for="item in people"
+                     :key="item.id"
+                     :label="item.username"
+                     :value="item.username" />
+        </el-select>
       </el-form-item>
       <el-form-item label="部门介绍"
                     prop="introduce">
@@ -41,10 +49,12 @@
       <!-- 列被分为24 -->
       <el-col :span="6">
         <el-button type="primary"
-                   size="small">
+                   size="small"
+                   @click="btnOK">
           确定
         </el-button>
-        <el-button size="small">
+        <el-button size="small"
+                   @click="cancel">
           取消
         </el-button>
       </el-col>
@@ -52,7 +62,13 @@
   </el-dialog>
 </template>
 <script>
-import { getDepartments } from '@/api/departments'
+import { getEmployeeSimple } from '@/api/employess.js'
+import {
+  getDepartments,
+  addDepartments,
+  getDepartDetail,
+  updateDepartments
+} from '@/api/departments'
 export default {
   props: {
     showgada: {
@@ -65,25 +81,52 @@ export default {
     }
   },
   data() {
-    const checkCodeRepeat = async (rule, value, callback) => {
-      // 先要获取最新的组织架构数据
-      const { depts } = await getDepartments()
-      const isRepeat = depts.some((item) => item.code === value && value) // 这里加一个 value不为空 因为我们的部门有可能没有code
-      isRepeat
-        ? callback(new Error(`组织架构中已经有部门使用${value}编码`))
-        : callback()
-    }
     // 现在定义一个函数 这个函数的目的是 去找 同级部门下 是否有重复的部门名称
     const checkNameRepeat = async (rule, value, callback) => {
       // 先要获取最新的组织架构数据
       const { depts } = await getDepartments()
+      //  检查重复规则 需要支持两种 新增模式 / 编辑模式
       // depts是所有的部门数据
       // 如何去找技术部所有的子节点
-      const isRepeat = depts
-        .filter((item) => item.pid === this.treeNode.id)
-        .some((item) => item.name === value)
+      let isRepeat = false
+      if (this.formData.id) {
+        // 有id就是编辑模式
+        // 编辑 张三 => 校验规则 除了我之外 同级部门下 不能有叫张三的
+        isRepeat = depts
+          .filter(
+            (item) =>
+              item.id !== this.formData.id && item.pid === this.treeNode.pid
+          )
+          .some((item) => item.name === value)
+      } else {
+        // 没id就是新增模式
+        isRepeat = depts
+          .filter((item) => item.pid === this.treeNode.id)
+          .some((item) => item.name === value)
+      }
+
       isRepeat
         ? callback(new Error(`同级部门下已经有${value}的部门了`))
+        : callback()
+    }
+    // 检查编码重复
+    const checkCodeRepeat = async (rule, value, callback) => {
+      // 先要获取最新的组织架构数据
+      //  检查重复规则 需要支持两种 新增模式 / 编辑模式
+      const { depts } = await getDepartments()
+      let isRepeat = false
+      if (this.formData.id) {
+        // 编辑模式  因为编辑模式下 不能算自己
+        isRepeat = depts.some(
+          (item) => item.id !== this.formData.id && item.code === value && value
+        )
+      } else {
+        // 新增模式
+        isRepeat = depts.some((item) => item.code === value && value) // 这里加一个 value不为空 因为我们的部门有可能没有code
+      }
+
+      isRepeat
+        ? callback(new Error(`组织架构中已经有部门使用${value}编码`))
         : callback()
     }
     return {
@@ -135,12 +178,54 @@ export default {
             message: '部门介绍要求1-50个字符'
           }
         ]
-      }
+      },
+      people: [] // 接收获取的员工简单列表的数据
+    }
+  },
+  computed: {
+    showTitle() {
+      return this.formData.id ? '编辑部门' : '新增部门'
     }
   },
   methods: {
     sendgada() {
       console.log('gad')
+    },
+    async getEmployeeSimple() {
+      this.people = await getEmployeeSimple()
+    },
+    // 点击确定时触发
+    btnOK() {
+      console.log(111)
+      this.$refs.deptForm.validate(async (isOK) => {
+        console.log(isOK)
+        if (isOK) {
+          if (this.formData.id) {
+            await updateDepartments(this.formData)
+          } else {
+            await addDepartments({ ...this.formData, pid: this.treeNode.id }) // 调用新增接口 添加父部门的id
+          }
+          // 表示可以提交了
+
+          this.$emit('delDepts')
+          this.$emit('update:add', false)
+        }
+      })
+    },
+    cancel() {
+      // 重置数据  因为resetFields 只能重置 表单上的数据 非表单上的 比如 编辑中id 不能重置
+      this.formData = {
+        name: '',
+        code: '',
+        manager: '',
+        introduce: ''
+      }
+      this.$emit('update:add', false)
+      this.$refs.deptForm.resetFields()
+    },
+    async getDepartDetail(id) {
+      // 关闭弹层
+      this.formData = await getDepartDetail(id)
     }
   }
 }

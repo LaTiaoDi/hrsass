@@ -19,12 +19,16 @@
           <tree-tools slot-scope="{ data }"
                       :tree-node="data"
                       @add="setAdd"
-                      @delDepts="getDepartments" />
+                      @delDepts="getDepartments"
+                      @editDepts="editDepts" />
         </el-tree>
       </el-card>
     </div>
-    <add-dept :showgada="add"
-              :tree-node="node" />
+    <add-dept ref="addDept"
+              :showgada="add"
+              :tree-node="node"
+              :add.sync="add"
+              @delDepts="getDepartments" />
   </div>
 </template>
 
@@ -67,6 +71,14 @@ export default {
       this.add = true // 显示弹层
       // 因为node是当前的点击的部门， 此时这个部门应该记录下来,
       this.node = node
+    },
+    editDepts(node) {
+      // 首先打开弹层
+      this.add = true
+      this.node = node // 赋值操作的节点
+      console.log(node)
+      console.log(this.$refs.addDept)
+      this.$refs.addDept.getDepartDetail(node.id)
     }
   }
 }
