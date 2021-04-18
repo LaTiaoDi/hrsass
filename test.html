@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    function Student(name){
+
+        console.log(`Hi This is ${name}!'`);
+
+      function People(name){
+
+      }
+      People.prototype.sleep =  function(time){
+        // this.prototype.study = People.prototype.study
+
+        console.log('Wake up after '+time);
+        return {
+          study:(name) =>{
+            setTimeout(()=>{
+              this.study(name)
+            },time*3000)
+          }
+        }
+      }
+      People.prototype.study = function(course){
+        // console.log('Hi This is fxy!');
+        console.log(course);
+        // console.log('Study.Vue');
+      }
+      return new People(name)
+    }
+    // Student('fxy')
+    Student('fxy').sleep(3).study('javascript')
+
+  </script>
+</body>
+</html>

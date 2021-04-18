@@ -5,11 +5,14 @@
         <span slot="before">共166条记录</span>
         <template slot="after">
           <el-button size="small"
-                     type="warning">导入</el-button>
+                     type="warning"
+                     @click="$router.push('/import')">导入</el-button>
           <el-button size="small"
-                     type="danger">导出</el-button>
+                     type="danger"
+                     @click="exportData">导出</el-button>
           <el-button size="small"
-                     type="primary">新增员工</el-button>
+                     type="primary"
+                     @click='showDialog = true'>新增员工</el-button>
         </template>
       </page-tools>
       <!-- 放置表格和分页 -->
@@ -22,6 +25,16 @@
           <el-table-column label="姓名"
                            sortable=""
                            prop="username" />
+          <el-table-column label="头像"
+                           sortable=""
+                           prop="username">
+            <template v-slot='{row}'>
+              <img v-imageerror="require('@/assets/common/bigUserHeader.png')"
+                   class="touxiang"
+                   :src="row.staffPhoto"
+                   alt="">
+            </template>
+          </el-table-column>
           <el-table-column label="工号"
                            sortable=""
                            prop="workNumber" />
@@ -55,7 +68,8 @@
                            width="280">
             <template v-slot='{row}'>
               <el-button type="text"
-                         size="small">查看</el-button>
+                         size="small"
+                         @click="$router.push('employees/detail/'+row.id)">查看</el-button>
               <el-button type="text"
                          size="small">转正</el-button>
               <el-button type="text"
@@ -83,15 +97,20 @@
         </el-row>
       </el-card>
     </div>
+    <!-- 添加框弹出层 -->
+    <add-employee :showDialog.sync='showDialog'></add-employee>
   </div>
 </template>
 
 <script>
 import { getEmployeeList, delEmployee } from '@/api/employess'
 import EmployeeEnum from '@/api/constant/employees'
+import addEmployee from './components/add-employee'
 export default {
+  components: { addEmployee },
   data() {
     return {
+      showDialog: false, //添加框弹出层
       loading: false,
       list: [], // 接数据的
       page: {
@@ -132,11 +151,28 @@ export default {
         return item.id === cellValue
       })
       return obj ? obj.value : '未知'
+    },
+    exportData() {
+      import('@/vendor/Export2Excel').then((excel) => {
+        excel.export_json_to_excel({
+          header: ['姓名', '工资'], //表头 必填
+          data: [['嘎达赵', '1000']], //具体数据 必填
+          filename: 'excel-list', //非必填
+          autoWidth: true, //非必填
+          bookType: 'xlsx' //非必填
+        })
+      })
     }
   }
 }
 </script>
 
 <style>
+.touxiang {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  padding: 10px;
+}
 </style>
 

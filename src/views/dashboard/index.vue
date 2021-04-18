@@ -14,6 +14,7 @@
     <div class="dashboard-text">
       name: {{ name }}
     </div>
+    <upload-excel></upload-excel>
   </div>
 </template>
 
