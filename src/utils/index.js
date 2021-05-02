@@ -137,3 +137,21 @@ export function tranListToTreeData(list, rootValue) {
   });
   return arr;
 }
+
+// 手写树形结构递归算法
+
+// function tranListToTreeData(list,rootValue) {
+//   let arr = []
+//   list.forEach(item => {
+//     if(item.pid === rootValue){
+//        // 如果分类iD为空，那么进行二次遍历查找子节点
+//        const children =  tranListToTreeData(list,item.id)
+//        if(children.length){
+//          //如果有数值
+//          item.children = children
+//        }
+//        arr.push(item)
+//     }
+//   })
+//   return arr 
+// }

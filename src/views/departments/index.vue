@@ -63,9 +63,11 @@ export default {
   methods: {
     async getDepartments() {
       const data = await getDepartments()
-
+      console.log(data);
       this.gada = { name: data.companyName, manager: '负责人', id: '' }
+  
       this.list = tranListToTreeData(data.depts, '')
+      console.log(this.list);
     },
     setAdd(node) {
       this.add = true // 显示弹层

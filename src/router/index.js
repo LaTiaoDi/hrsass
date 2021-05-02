@@ -15,6 +15,7 @@ import attendancesRouter from "./modules/attendances";
 import salarysRouter from "./modules/salarys";
 import settingRouter from "./modules/setting";
 import socialRouter from "./modules/social";
+import user from "./modules/user";
 /**
  * Note: sub-menu only appear when route children.length >= 1
  * Detail see: https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html
@@ -76,10 +77,11 @@ export const constantRoutes = [
         meta: { title: "Dashboard", icon: "dashboard" }
       }
     ]
-  }
+  },
 
   // 404 page must be placed at the end !!!
   // { path: "*", redirect: "/404", hidden: true }
+  user
 ];
 export const asyncRoutes = [
   approvalsRouter,
